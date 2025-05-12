@@ -6,8 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.mjapp.rush.presentation.screen.EStoreAppNavigation
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.mjapp.rush.presentation.screen.ProductListScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -20,9 +24,28 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    EStoreAppNavigation()
+                    AppNavigation()
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "productList") {
+        composable("productList") {
+            ProductListScreen(navController = navController)
+        }
+        composable("productDetail/{productId}") { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId")
+            if (productId != null) {
+//                ProductDetailScreen(productId = productId, navController = navController)
+            }
+        }
+        composable("cart") {
+//            CartScreen(navController = navController)
         }
     }
 }

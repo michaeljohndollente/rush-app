@@ -1,93 +1,87 @@
 package com.mjapp.rush.presentation.viewmodel
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mjapp.rush.data.model.entities.Category
-import com.mjapp.rush.data.model.entities.Product
-import com.mjapp.rush.domain.usecase.GetCachedCategoriesUseCase
-import com.mjapp.rush.domain.usecase.GetCachedProductListUseCase
+import com.mjapp.rush.core.common.DataState
+import com.mjapp.rush.data.model.product.ProductDataResponse
+import com.mjapp.rush.data.model.product.ProductItem
+import com.mjapp.rush.domain.model.Category
+import com.mjapp.rush.domain.model.Product
 import com.mjapp.rush.domain.usecase.GetCategoriesUseCase
 import com.mjapp.rush.domain.usecase.GetProductListUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
 
-class ProductListViewModel(
-    val getCategoriesUseCase: GetCategoriesUseCase,
-    val getProductListUseCase: GetProductListUseCase,
-    val getCachedCategoriesUseCase: GetCachedCategoriesUseCase,
-    val getCachedProductListUseCase: GetCachedProductListUseCase
+@HiltViewModel
+class ProductListViewModel @Inject constructor(
+    private val getCategoriesUseCase: GetCategoriesUseCase,
+    private val getProductListUseCase: GetProductListUseCase,
 ) : ViewModel() {
 
-    private val _categories = MutableStateFlow<List<Category>>(emptyList())
-    val categories: StateFlow<List<Category>> = _categories.asStateFlow()
+    private val _featuredProducts = MutableStateFlow<DataState<List<ProductItem>>>(DataState.Loading)
+    val featuredProducts: StateFlow<DataState<List<ProductItem>>> = _featuredProducts
 
-    private val _products = MutableStateFlow<List<Product>>(emptyList())
-    val products: StateFlow<List<Product>> = _products.asStateFlow()
+    private val _categories = MutableStateFlow<DataState<List<Category>>>(DataState.Loading)
+    val categories: StateFlow<DataState<List<Category>>> = _categories
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    private val _productList = MutableStateFlow<DataState<ProductDataResponse>>(DataState.Loading)
+    val productList: StateFlow<DataState<ProductDataResponse>> = _productList
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+    private val _currentPage = mutableStateOf(1)
+    val currentPage: State<Int> = _currentPage
 
-    var currentPage = 1
-    var maxPage: Int? = null
-    var isLoadMoreLoading = false
+    private val branchUuid = "f1c0ded3-ff8b-435e-b5b3-bd17cba34a51"
+    private val brandUuid = "ef89d985-2e2a-4eb8-8553-84867c9affe7"
 
     init {
-        loadInitialData()
+        loadCategories()
+        loadProducts(_currentPage.value)
     }
 
-    private fun loadInitialData() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            // Load categories (can be done in parallel if needed)
-            getCategoriesUseCase()
-                .onSuccess { _categories.value = it }
-                .onFailure { _errorMessage.value = it.message }
-
-            // Load initial product list
-            getProductList(1)
-            _isLoading.value = false
-        }
+    fun loadCategories() {
+        getCategoriesUseCase(branchUuid).onEach { dataState ->
+            _categories.value = dataState
+        }.launchIn(viewModelScope)
     }
 
-    private fun getProductList(page: Int) {
-        viewModelScope.launch {
-            getProductListUseCase(page)
-                .onSuccess { (newProducts, newMaxPage) ->
-                    if (page == 1) {
-                        _products.value = newProducts
-                    } else {
-                        _products.value = _products.value + newProducts
-                    }
-                    maxPage = newMaxPage
+    fun loadFeaturedProducts() {
+        getProductListUseCase(1, branchUuid, brandUuid) // Returns Flow<DataState<ProductDataResponse>>
+            .onEach { dataState ->
+                if (dataState is DataState.Success) {
+                    val whatsNewProducts = dataState.data?.list?.filter { product ->
+                        product.category?.name?.equals("What's New", ignoreCase = true) == true
+                    }?.take(4) ?: emptyList()
+                    _featuredProducts.value = DataState.Success(whatsNewProducts)
+                } else if (dataState is DataState.Loading) {
+                    _featuredProducts.value = DataState.Loading // Create Loading with the correct type
+                } else if (dataState is DataState.Error) {
+                    _featuredProducts.value = DataState.Error(dataState.message) // Create Error with the correct type
                 }
-                .onFailure { _errorMessage.value = it.message }
-        }
+            }.launchIn(viewModelScope)
     }
+
 
     fun loadMoreProducts() {
-        if (!isLoadMoreLoading && (maxPage == null || currentPage < maxPage!!)) {
-            isLoadMoreLoading = true
-            currentPage++
-            viewModelScope.launch {
-                getProductListUseCase(currentPage)
-                    .onSuccess { (newProducts, newMaxPage) ->
-                        _products.value = _products.value + newProducts
-                        maxPage = newMaxPage
-                    }
-                    .onFailure { _errorMessage.value = it.message }
-                isLoadMoreLoading = false
-            }
+        val nextPage = _currentPage.value + 1
+        if (_productList.value is DataState.Success<*> && (_productList.value as DataState.Success<ProductDataResponse>).data.next_page != null) {
+            loadProducts(nextPage)
         }
     }
 
-    // Function to get cached data if needed (e.g., on app restart)
-    suspend fun loadCachedData() {
-        _categories.value = getCachedCategoriesUseCase()
-        _products.value = getCachedProductListUseCase()
+    private fun loadProducts(page: Int) {
+        getProductListUseCase(page, branchUuid, brandUuid).onEach { dataState ->
+            _productList.value = dataState
+        }.launchIn(viewModelScope)
+    }
+
+    fun onProductClicked(product: Product) {
+        // TODO: Implement navigation to Part 2
+        println("Product clicked: ${product.name}")
     }
 }

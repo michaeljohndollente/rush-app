@@ -1,123 +1,264 @@
 package com.mjapp.rush.presentation.screen
 
-import android.app.Application
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.mjapp.rush.data.model.entities.Category
-import com.mjapp.rush.data.model.entities.Product
-import com.mjapp.rush.presentation.factory.ProductListViewModelFactory
+import com.mjapp.rush.core.common.DataState
+import com.mjapp.rush.data.model.product.ProductDataResponse
+import com.mjapp.rush.data.model.product.ProductItem
+import com.mjapp.rush.domain.model.Category
 import com.mjapp.rush.presentation.viewmodel.ProductListViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductListScreen(
-    onProductClick: (Product) -> Unit,
-    onCartClick: () -> Unit,
-    viewModel: ProductListViewModel = viewModel(factory = ProductListViewModelFactory(LocalContext.current.applicationContext as Application))
-) {
-    val categories by viewModel.categories.collectAsState()
-    val products by viewModel.products.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
+fun ProductListScreen(viewModel: ProductListViewModel = hiltViewModel(), navController: NavController) {
+    val categoriesState by viewModel.categories.collectAsState(initial = DataState.Loading)
+    val productListState by viewModel.productList.collectAsState(initial = DataState.Loading)
+    var selectedCategory by remember { mutableStateOf<Category?>(null) }
+    val cartItemCount = remember { mutableStateOf(0) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Static Store Name") }, actions = {
-            IconButton(onClick = onCartClick) {
-                Icon(Icons.Filled.ShoppingCart, contentDescription = "Cart")
+    Scaffold(
+        modifier = Modifier
+            .padding(8.dp)
+            .padding(horizontal = 16.dp)
+            .fillMaxSize(),
+        topBar = { StoreTopBar("Wings & Co. - SM Megamall", "Fastfood, Breakfast") },
+        bottomBar = {
+                if (cartItemCount.value > 0) {
+                CartBottomBar(navController = navController, cartItemCount = cartItemCount.value)
             }
-        })
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+        ) {
+            StoreInfoSection("4F, SM Megamall, Mandaluyong City, Metro Manila", onMoreInfoClick = { })
+            Spacer(modifier = Modifier.height(16.dp))
 
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (errorMessage != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Error: $errorMessage", textAlign = TextAlign.Center)
-            }
-        } else {
-            LazyColumn {
-                item {
-                    // "What's New" Category
-                    if (categories.isNotEmpty()) {
-                        CategorySection(category = categories.first()) // Assuming only one "What's New" category
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+            CategoryDropdown(
+                categoriesState = categoriesState,
+                onCategorySelected = { category ->
+                    selectedCategory = category
+                },
+                defaultText = { "testtest" }.toString()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = selectedCategory?.name.toString(),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            when (productListState) {
+                is DataState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                is DataState.Success -> {
+                    ProductGrid(products = (productListState as DataState.Success<ProductDataResponse>).data.list.orEmpty(), columns = 2, onItemClick = { productId -> navController.navigate("productDetail/$productId") })
                 }
-
-//                items(products.lastIndex) { product ->
-//                    ProductItemCard(product = Product(
-//                    ), onClick = { onProductClick(product) })
-//                    Divider()
-//                }
-
-                if (products.isNotEmpty() && viewModel.maxPage != null && viewModel.currentPage < viewModel.maxPage!!) {
-                    item {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Button(onClick = { viewModel.loadMoreProducts() }) {
-                                Text("Load More")
-                            }
-                        }
-                    }
-                }
+                is DataState.Error -> Text(text = (productListState as DataState.Error).message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }
         }
     }
 }
 
 @Composable
-fun CategorySection(category: Category) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text(text = category.name, style = MaterialTheme.typography.bodySmall)
-        // You might add a "View All" button if viewAllEnabled is true
+fun StoreTopBar(storeName: String, category: String) {
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .padding(bottom = 16.dp, top = 32.dp)
+    ) {
+        Text(text = storeName, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+        Text(text = category, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
     }
 }
 
 @Composable
-fun ProductItemCard(product: Product, onClick: () -> Unit) {
+fun StoreInfoSection(address: String, onMoreInfoClick: () -> Unit) {
+    var isAddressVisible by remember { mutableStateOf(false) }
+
+
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        AsyncImage(
-            model = product.imageUrl,
-            contentDescription = product.name,
-            modifier = Modifier.size(80.dp),
-            placeholder = painterResource(id = android.R.drawable.ic_menu_gallery),
-            error = painterResource(id = android.R.drawable.ic_menu_report_image),
-            contentScale = ContentScale.Crop
+
+        Text(text = "Store Info", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
+        Button(
+            onClick = { isAddressVisible = !isAddressVisible },
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(text = if (isAddressVisible) "Less Info" else "More Info", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+    if (isAddressVisible) {
+        Text(
+            text = address,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(text = product.name, style = MaterialTheme.typography.bodyLarge)
-            Text(text = product.price, style = MaterialTheme.typography.bodyMedium)
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Divider()
+}
+
+@Composable
+fun ProductGrid(products: List<ProductItem>, columns: Int, onItemClick: (String) -> Unit) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(products.size) { index ->
+            val product = products[index]
+            ProductGridItem(product = product, onClick = { onItemClick(product.uuid!!) })
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductGridItem(product: ProductItem, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        elevation = CardDefaults.elevatedCardElevation(),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.height(220.dp) // Adjust this value as needed
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AsyncImage(
+                model = product.images?.firstOrNull()?.image_name ?: "",
+                contentDescription = product.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = product.name ?: "Product Name",
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "₱ ${product.price ?: "Price Unavailable"}",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun CartBottomBar(navController: NavController, cartItemCount: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+
+    ) {
+        Button(onClick = { navController.navigate("cart") }, shape = RoundedCornerShape(8.dp)) {
+            Text(text = "View Cart ($cartItemCount items)")
+        }
+    }
+}
+
+@Composable
+fun CategoryDropdown(
+    categoriesState: DataState<List<Category>>,
+    onCategorySelected: (Category?) -> Unit,
+    defaultText: String = "What's New"
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf<Category?>(null) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable { expanded = !expanded }
+    ) {
+        Text(
+            text = selectedCategory?.name ?: defaultText,
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+        )
+        Icon(Icons.Filled.ArrowDropDown, contentDescription = "View Categories")
+    }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        DropdownMenuItem(
+            onClick = {
+                selectedCategory = null // User selected "What's New"
+                expanded = false
+                onCategorySelected(null)
+            }, text = { Text("What's New") }
+        )
+        Log.d("CategoryDropdown", "Current categoriesState: $categoriesState")
+        if (categoriesState is DataState.Success) {
+            val categories = categoriesState.data
+            Log.d("CategoryDropdown", "Number of fetched categories: ${categories.size}")
+            Log.d("CategoryDropdown", "Fetched categories: ${categories.joinToString { it.name ?: "null" }}")
+            categories.forEach { category ->
+                DropdownMenuItem(
+                    onClick = {
+                        selectedCategory = category // User selected a specific category
+                        expanded = false
+                        onCategorySelected(category)
+                    },
+                    text = { Text(category.name ?: "Unknown Category") }
+                )
+            }
+        } else if (categoriesState is DataState.Error) {
+            Text("Error loading categories")
+        } else {
+            Text("Loading categories...")
+        }
+    }
+}
+
