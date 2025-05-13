@@ -73,20 +73,19 @@ fun ProductListScreen(viewModel: ProductListViewModel = hiltViewModel(), navCont
                 categoriesState = categoriesState,
                 onCategorySelected = { category ->
                     selectedCategory = category
-                },
-                defaultText = { "testtest" }.toString()
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = selectedCategory?.name.toString(),
+                text = "What's New",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             when (productListState) {
-                is DataState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                is DataState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(16.dp).align(alignment = Alignment.CenterHorizontally))
                 is DataState.Success -> {
                     ProductGrid(products = (productListState as DataState.Success<ProductDataResponse>).data.list.orEmpty(), columns = 2, onItemClick = { productId -> navController.navigate("productDetail/$productId") })
                 }
@@ -122,13 +121,14 @@ fun StoreInfoSection(address: String, onMoreInfoClick: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
 
-        Text(text = "Store Info", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold))
-        Button(
-            onClick = { isAddressVisible = !isAddressVisible },
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(text = if (isAddressVisible) "Less Info" else "More Info", style = MaterialTheme.typography.bodySmall)
-        }
+        Text(text = "Store Info", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+        Text(
+            text = if (isAddressVisible) "Less Info" else "More Info",
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+
+            color = Color(255, 165, 0), // Use primary color for better visibility of clickable text
+            modifier = Modifier.clickable { isAddressVisible = !isAddressVisible }
+        )
     }
     if (isAddressVisible) {
         Text(
@@ -163,7 +163,7 @@ fun ProductGridItem(product: ProductItem, onClick: () -> Unit) {
         onClick = onClick,
         elevation = CardDefaults.elevatedCardElevation(),
         shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.height(220.dp) // Adjust this value as needed
+        modifier = Modifier.height(220.dp)
     ) {
         Column(
             modifier = Modifier.padding(8.dp),
@@ -239,11 +239,12 @@ fun CategoryDropdown(
                 onCategorySelected(null)
             }, text = { Text("What's New") }
         )
-        Log.d("CategoryDropdown", "Current categoriesState: $categoriesState")
         if (categoriesState is DataState.Success) {
             val categories = categoriesState.data
+            Log.d("CategoryDropdown", "Current categoriesState: $categories")
+
             Log.d("CategoryDropdown", "Number of fetched categories: ${categories.size}")
-            Log.d("CategoryDropdown", "Fetched categories: ${categories.joinToString { it.name ?: "null" }}")
+            Log.d("CategoryDropdown", "Fetched categories: ${categories.map { it.name ?: "null" }}")
             categories.forEach { category ->
                 DropdownMenuItem(
                     onClick = {

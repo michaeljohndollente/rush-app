@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.map
 
 @Singleton
 class StoreRepositoryImpl @Inject constructor(
@@ -48,17 +49,17 @@ class StoreRepositoryImpl @Inject constructor(
         Log.d("StoreRepo", "Category API Response: $response") // Log the entire response
         if (response.status == 200 && response.data?.categories != null) {
             Log.d("StoreRepo", "CategoryItem from API: ${response.data.categories}")
-            val categories = listOf(response.data.categories.let {
-                Category(it.uuid!!, it.name, it.view_all_enabled)
-            })
             withContext(Dispatchers.IO) {
+                val categoryDomain = response.data.categories.map { it!!.toDomain() }
+                val categoryEntities = categoryDomain.map { it.toEntity() }
+
                 localDataSource.clearCategories()
-                localDataSource.insertCategories(categories.map { it.toEntity() })
+                localDataSource.insertCategories(categoryEntities)
                 localDataSource.getAllCategories().collect { entities ->
                     Log.d("StoreRepo", "Local categories after insert: $entities")
                 }
             }
-            emit(DataState.Success(categories))
+            emit(DataState.Success(response.data.categories.map { it!!.toDomain() }))
         } else {
             emit(DataState.Error(response.message ?: "Failed to fetch categories."))
         }

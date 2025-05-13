@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.mjapp.rush.presentation.screen.ProductDetailScreen
 import com.mjapp.rush.presentation.screen.ProductListScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -41,7 +42,7 @@ fun AppNavigation() {
         composable("productDetail/{productId}") { backStackEntry ->
             val productId = backStackEntry.arguments?.getString("productId")
             if (productId != null) {
-//                ProductDetailScreen(productId = productId, navController = navController)
+                ProductDetailScreen(productId = productId, navController = navController)
             }
         }
         composable("cart") {
