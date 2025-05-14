@@ -1,6 +1,8 @@
 package com.mjapp.rush.data.repository
 
 import android.util.Log
+import kotlinx.coroutines.*
+
 import com.mjapp.rush.core.common.DataState
 import com.mjapp.rush.core.common.toDomain
 import com.mjapp.rush.core.common.toEntity
@@ -27,26 +29,19 @@ class StoreRepositoryImpl @Inject constructor(
     private var cachedToken: String? = null
 
     override suspend fun getAuthToken(): String? {
-        Log.d("StoreRepo", "Attempting to fetch merchant token...")
         return cachedToken ?: runCatching {
             val tokenResponse = remoteDataSource.getMerchantToken()
-            Log.d("StoreRepo", "Token API Response: $tokenResponse") // Log the response
             tokenResponse.token.also { cachedToken = it }
-        }.getOrNull().also {
-            Log.d("StoreRepo", "Fetched token: $it, cachedToken is now: $cachedToken")
-        }
+        }.getOrNull()
     }
 
     override fun getCategories(branchUuid: String): Flow<DataState<List<Category>>> = flow {
         emit(DataState.Loading)
         val authToken = getAuthToken()
         if (authToken == null) {
-            emit(DataState.Error("Failed to retrieve authentication token."))
             return@flow
         }
-        Log.d("StoreRepo", "Fetching categories with token: $authToken and branchUuid: $branchUuid")
         val response = remoteDataSource.getCategories(authToken, branchUuid)
-        Log.d("StoreRepo", "Category API Response: $response") // Log the entire response
         if (response.status == 200 && response.data?.categories != null) {
             Log.d("StoreRepo", "CategoryItem from API: ${response.data.categories}")
             withContext(Dispatchers.IO) {
@@ -77,17 +72,13 @@ class StoreRepositoryImpl @Inject constructor(
         emit(DataState.Loading)
         val authToken = getAuthToken()
         if (authToken == null) {
-            emit(DataState.Error("Failed to retrieve authentication token."))
             return@flow
         }
-        Log.d("StoreRepo", "Fetching products (page $page) with token: $authToken, branchUuid: $branchUuid, brandUuid: $brandUuid")
         val response = remoteDataSource.getProductList(authToken, page, branchUuid, brandUuid)
-        Log.d("StoreRepo", "Product API Response (page $page): $response") // Log the entire response
         if (response.list != null) {
             withContext(Dispatchers.IO) {
                 val productEntities = response.list.map { it.toEntity(branchUuid, brandUuid) }
                 localDataSource.insertProducts(productEntities)
-                // Optionally log inserted products
             }
             emit(DataState.Success(response))
         } else {
@@ -95,7 +86,6 @@ class StoreRepositoryImpl @Inject constructor(
         }
     }.catch { e ->
         emit(DataState.Error("Network error: ${e.message}"))
-        // Optionally log error
     }
 
 }

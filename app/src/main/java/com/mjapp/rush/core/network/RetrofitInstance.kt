@@ -12,11 +12,11 @@ object RetrofitInstance {
     fun getApiService(tokenProvider: suspend () -> String?): ApiService {
         return apiService ?: synchronized(this) {
             val loggingInterceptor = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY // Or BASIC, HEADERS
+                level = HttpLoggingInterceptor.Level.BODY
             }
             val client = OkHttpClient.Builder()
                 .addInterceptor(AuthInterceptor(tokenProvider))
-                .addInterceptor(loggingInterceptor) // Add the logging interceptor
+                .addInterceptor(loggingInterceptor)
                 .build()
 
             Retrofit.Builder()

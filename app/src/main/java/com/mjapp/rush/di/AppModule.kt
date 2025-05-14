@@ -35,8 +35,7 @@ object AppModule {
     @Singleton
     @Provides
     fun provideApiService(): ApiService {
-        // Provide a function to get the token when needed
-        val tokenProvider: suspend () -> String? = { null } // Replace with actual token fetching logic if needed here
+        val tokenProvider: suspend () -> String? = { null }
         return RetrofitInstance.getApiService(tokenProvider)
     }
 }
