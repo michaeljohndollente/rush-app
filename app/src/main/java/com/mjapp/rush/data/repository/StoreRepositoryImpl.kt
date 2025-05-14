@@ -1,8 +1,5 @@
 package com.mjapp.rush.data.repository
 
-import android.util.Log
-import kotlinx.coroutines.*
-
 import com.mjapp.rush.core.common.DataState
 import com.mjapp.rush.core.common.toDomain
 import com.mjapp.rush.core.common.toEntity
@@ -38,21 +35,13 @@ class StoreRepositoryImpl @Inject constructor(
     override fun getCategories(branchUuid: String): Flow<DataState<List<Category>>> = flow {
         emit(DataState.Loading)
         val authToken = getAuthToken()
-        if (authToken == null) {
-            return@flow
-        }
+        if (authToken == null) return@flow
         val response = remoteDataSource.getCategories(authToken, branchUuid)
         if (response.status == 200 && response.data?.categories != null) {
-            Log.d("StoreRepo", "CategoryItem from API: ${response.data.categories}")
             withContext(Dispatchers.IO) {
                 val categoryDomain = response.data.categories.map { it!!.toDomain() }
                 val categoryEntities = categoryDomain.map { it.toEntity() }
-
-                localDataSource.clearCategories()
                 localDataSource.insertCategories(categoryEntities)
-                localDataSource.getAllCategories().collect { entities ->
-                    Log.d("StoreRepo", "Local categories after insert: $entities")
-                }
             }
             emit(DataState.Success(response.data.categories.map { it!!.toDomain() }))
         } else {
@@ -64,16 +53,13 @@ class StoreRepositoryImpl @Inject constructor(
             entities.map { it.toDomain() }
         }.catch { emit(emptyList()) }.collect { localCategories ->
             emit(DataState.Success(localCategories))
-            Log.d("StoreRepo", "Loaded local categories on error: $localCategories")
         }
     }
 
     override fun getProductList(page: Int, branchUuid: String, brandUuid: String): Flow<DataState<ProductDataResponse>> = flow {
         emit(DataState.Loading)
         val authToken = getAuthToken()
-        if (authToken == null) {
-            return@flow
-        }
+        if (authToken == null) return@flow
         val response = remoteDataSource.getProductList(authToken, page, branchUuid, brandUuid)
         if (response.list != null) {
             withContext(Dispatchers.IO) {
@@ -87,5 +73,4 @@ class StoreRepositoryImpl @Inject constructor(
     }.catch { e ->
         emit(DataState.Error("Network error: ${e.message}"))
     }
-
 }

@@ -19,5 +19,6 @@ class LocalDataSource @Inject constructor(
 
     fun getProducts(branchUuid: String, brandUuid: String, limit: Int, offset: Int): Flow<List<ProductEntity>> =
         productDao.getProducts(branchUuid, brandUuid, limit, offset)
+
     suspend fun clearProducts(branchUuid: String, brandUuid: String) = productDao.clearProducts(branchUuid, brandUuid)
 }

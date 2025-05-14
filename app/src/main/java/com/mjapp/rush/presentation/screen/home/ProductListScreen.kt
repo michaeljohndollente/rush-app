@@ -58,22 +58,11 @@ fun ProductListScreen (
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Log.d("TAG", "ProductListScreen: $categoriesState")
-            Log.d("TAG", "ProductListScreen: $selectedCategory")
-
             CategoryDropdown(
                 categoriesState = categoriesState,
                 onCategorySelected = { category ->
                     selectedCategory = category
                 }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "What's New",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -83,7 +72,14 @@ fun ProductListScreen (
                     .padding(16.dp)
                     .align(alignment = Alignment.CenterHorizontally))
                 is DataState.Success -> {
-                    ProductGrid(products = (productListState as DataState.Success<ProductDataResponse>).data.list.orEmpty(), columns = 2, onItemClick = { productId -> navController.navigate("productDetail/$productId") })
+                    ProductGrid(products = (
+                            productListState as DataState.Success<ProductDataResponse>
+                            )
+                        .data.list.orEmpty(),
+                        columns = 2,
+                        onItemClick = {
+                            productId -> navController.navigate("productDetail/$productId")
+                    })
                 }
                 is DataState.Error -> Text(text = (productListState as DataState.Error).message, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
             }

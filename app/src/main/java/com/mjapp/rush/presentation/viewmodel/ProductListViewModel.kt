@@ -37,10 +37,7 @@ class ProductListViewModel @Inject constructor(
     private val brandUuid = "ef89d985-2e2a-4eb8-8553-84867c9affe7"
 
     init {
-        viewModelScope.launch {
-            delay(3000)
-            loadCategories()
-        }
+        loadCategories()
         loadProducts(currentPage.value)
     }
 
