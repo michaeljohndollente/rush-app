@@ -1,4 +1,4 @@
-package com.mjapp.rush.data.model.auth
+package com.mjapp.rush.domain.model.auth
 
 data class TokenResponse(
     val token: String?,

@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mjapp.rush.core.common.DataState
-import com.mjapp.rush.data.model.product.ProductDataResponse
-import com.mjapp.rush.domain.model.Category
+import com.mjapp.rush.domain.model.category.CategoryItem
+import com.mjapp.rush.domain.model.product.ProductDataResponse
 import com.mjapp.rush.presentation.viewmodel.ProductListViewModel
 
 @Composable
@@ -32,7 +32,7 @@ fun ProductListScreen (
 ) {
     val categoriesState by viewModel.categories.collectAsState(initial = DataState.Loading)
     val productListState by viewModel.productList.collectAsState(initial = DataState.Loading)
-    var selectedCategory by remember { mutableStateOf<Category?>(null) }
+    var selectedCategory by remember { mutableStateOf<CategoryItem?>(null) }
     val cartItemCount = remember { mutableStateOf(2) }
 
     Scaffold(

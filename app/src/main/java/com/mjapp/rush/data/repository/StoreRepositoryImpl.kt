@@ -3,10 +3,10 @@ package com.mjapp.rush.data.repository
 import com.mjapp.rush.core.common.DataState
 import com.mjapp.rush.core.common.toDomain
 import com.mjapp.rush.core.common.toEntity
-import com.mjapp.rush.data.model.product.ProductDataResponse
+import com.mjapp.rush.domain.model.category.CategoryItem
+import com.mjapp.rush.domain.model.product.ProductDataResponse
 import com.mjapp.rush.data.source.local.LocalDataSource
 import com.mjapp.rush.data.source.remote.RemoteDataSource
-import com.mjapp.rush.domain.model.Category
 import com.mjapp.rush.domain.repository.StoreRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +32,7 @@ class StoreRepositoryImpl @Inject constructor(
         }.getOrNull()
     }
 
-    override fun getCategories(branchUuid: String): Flow<DataState<List<Category>>> = flow {
+    override fun getCategories(branchUuid: String): Flow<DataState<List<CategoryItem>>> = flow {
         emit(DataState.Loading)
         val authToken = getAuthToken()
         if (authToken == null) return@flow
@@ -47,13 +47,6 @@ class StoreRepositoryImpl @Inject constructor(
         } else {
             emit(DataState.Error(response.message ?: "Failed to fetch categories."))
         }
-    }.catch { e ->
-        emit(DataState.Error("Network error: ${e.message}"))
-        localDataSource.getAllCategories().map { entities ->
-            entities.map { it.toDomain() }
-        }.catch { emit(emptyList()) }.collect { localCategories ->
-            emit(DataState.Success(localCategories))
-        }
     }
 
     override fun getProductList(page: Int, branchUuid: String, brandUuid: String): Flow<DataState<ProductDataResponse>> = flow {
@@ -63,7 +56,7 @@ class StoreRepositoryImpl @Inject constructor(
         val response = remoteDataSource.getProductList(authToken, page, branchUuid, brandUuid)
         if (response.list != null) {
             withContext(Dispatchers.IO) {
-                val productEntities = response.list.map { it.toEntity(branchUuid, brandUuid) }
+                val productEntities = response.list.map { it.toEntity() }
                 localDataSource.insertProducts(productEntities)
             }
             emit(DataState.Success(response))

@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mjapp.rush.core.common.DataState
-import com.mjapp.rush.data.model.product.ProductDataResponse
-import com.mjapp.rush.domain.model.Category
+import com.mjapp.rush.domain.model.category.CategoryItem
+import com.mjapp.rush.domain.model.product.ProductDataResponse
 import com.mjapp.rush.domain.usecase.GetCategoriesUseCase
 import com.mjapp.rush.domain.usecase.GetProductListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,8 +23,8 @@ class ProductListViewModel @Inject constructor(
     private val getProductListUseCase: GetProductListUseCase,
 ) : ViewModel() {
 
-    private val _categories = MutableStateFlow<DataState<List<Category>>>(DataState.Loading)
-    val categories: StateFlow<DataState<List<Category>>> = _categories
+    private val _categories = MutableStateFlow<DataState<List<CategoryItem>>>(DataState.Loading)
+    val categories: StateFlow<DataState<List<CategoryItem>>> = _categories
 
     private val _productList = MutableStateFlow<DataState<ProductDataResponse>>(DataState.Loading)
     val productList: StateFlow<DataState<ProductDataResponse>> = _productList

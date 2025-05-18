@@ -19,16 +19,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.mjapp.rush.core.common.DataState
-import com.mjapp.rush.domain.model.Category
+import com.mjapp.rush.domain.model.category.CategoryItem
 
 @Composable
 fun CategoryDropdown(
-    categoriesState: DataState<List<Category>>,
-    onCategorySelected: (Category?) -> Unit,
+    categoriesState: DataState<List<CategoryItem>>,
+    onCategorySelected: (CategoryItem?) -> Unit,
 ) {
     val defaultText = "What's New"
     var expanded by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf<Category?>(null) }
+    var selectedCategory by remember { mutableStateOf<CategoryItem?>(null) }
     Row(
         modifier = Modifier
             .clickable {

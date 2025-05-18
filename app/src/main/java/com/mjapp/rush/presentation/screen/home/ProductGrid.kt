@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
-import com.mjapp.rush.data.model.product.ProductItem
+import com.mjapp.rush.domain.model.product.ProductItem
 
 @Composable
 fun ProductGrid(products: List<ProductItem>, columns: Int, onItemClick: (String) -> Unit) {

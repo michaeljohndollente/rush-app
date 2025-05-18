@@ -1,7 +1,7 @@
-package com.mjapp.rush.domain.model
+package com.mjapp.rush.domain.model.product
 
-data class Product(
-    val uuid: String,
+data class ProductItem(
+    val uuid: String?,
     val merchant_uuid: String?,
     val name: String?,
     val description: String?,
@@ -13,6 +13,6 @@ data class Product(
     val deleted_at: String?,
     val raw_price: String?,
     val price: String?,
-    val image_urls: List<String>,
-    val category: String?
+    val images: List<Images>?,
+    val category: CategoryInfo?
 )

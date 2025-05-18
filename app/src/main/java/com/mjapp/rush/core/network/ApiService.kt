@@ -1,8 +1,8 @@
 package com.mjapp.rush.core.network
 
-import com.mjapp.rush.data.model.auth.TokenResponse
-import com.mjapp.rush.data.model.category.CategoryDataResponse
-import com.mjapp.rush.data.model.product.ProductDataResponse
+import com.mjapp.rush.domain.model.auth.TokenResponse
+import com.mjapp.rush.domain.model.category.CategoryDataResponse
+import com.mjapp.rush.domain.model.product.ProductDataResponse
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST

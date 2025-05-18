@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.mjapp.rush.data.model.product.ProductItem
+import com.mjapp.rush.domain.model.product.ProductItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,4 +1,4 @@
-package com.mjapp.rush.data.model.product
+package com.mjapp.rush.domain.model.product
 
 data class CategoryInfo(
     val id: Int?,

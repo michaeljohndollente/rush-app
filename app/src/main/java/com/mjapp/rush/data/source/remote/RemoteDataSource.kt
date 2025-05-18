@@ -1,9 +1,9 @@
 package com.mjapp.rush.data.source.remote
 
 import com.mjapp.rush.core.network.ApiService
-import com.mjapp.rush.data.model.auth.TokenResponse
-import com.mjapp.rush.data.model.category.CategoryDataResponse
-import com.mjapp.rush.data.model.product.ProductDataResponse
+import com.mjapp.rush.domain.model.auth.TokenResponse
+import com.mjapp.rush.domain.model.category.CategoryDataResponse
+import com.mjapp.rush.domain.model.product.ProductDataResponse
 import javax.inject.Inject
 
 class RemoteDataSource @Inject constructor(private val apiService: ApiService) {

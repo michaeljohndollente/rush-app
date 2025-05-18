@@ -2,6 +2,11 @@ package com.mjapp.rush.data.source.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.mjapp.rush.data.source.local.entity.converters.CategoryInfoConverter
+import com.mjapp.rush.data.source.local.entity.converters.ImagesListConverter
+import com.mjapp.rush.domain.model.product.CategoryInfo
+import com.mjapp.rush.domain.model.product.Images
 
 @Entity(tableName = "products")
 data class ProductEntity(
@@ -17,6 +22,8 @@ data class ProductEntity(
     val deleted_at: String?,
     val raw_price: String?,
     val price: String?,
-    val image_uuids: String?,
-    val category_uuid: String?
+    @TypeConverters(ImagesListConverter::class)
+    val images: List<Images>?,
+    @TypeConverters(CategoryInfoConverter::class)
+    val category: CategoryInfo?
 )

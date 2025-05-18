@@ -1,4 +1,4 @@
-package com.mjapp.rush.data.model.category
+package com.mjapp.rush.domain.model.category
 
 data class CategoryItem(
     val uuid: String?,
