@@ -1,5 +1,6 @@
 package com.mjapp.rush
 
+import CartScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -47,7 +48,7 @@ fun AppNavigation() {
             }
         }
         composable("cart") { backStackEntry ->
-//            CartScreen(navController = navController)
+            CartScreen()
         }
     }
 }

@@ -10,7 +10,6 @@ import com.mjapp.rush.domain.model.Category
 import com.mjapp.rush.domain.usecase.GetCategoriesUseCase
 import com.mjapp.rush.domain.usecase.GetProductListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
